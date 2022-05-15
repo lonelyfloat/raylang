@@ -8,13 +8,16 @@ import Data.Maybe
 
 -- Datatypes
 
-data ParseData = ParseData {currentCommand :: Int, commands :: [StateT RaylangData IO ()]}
+data ParseData = ParseData {currentCommand :: Int, commands :: [StateT RaylangData IO ()], commandStrs :: [String]}
 
 data RayData = RayData {
     vals::[Char], location :: Int
 }
 
 data RaylangData = RaylangData {rayData :: RayData, parseData :: ParseData}
+
+getClosestElemIndex :: Eq a => Int -> a -> [a] -> Int
+getClosestElemIndex ix x xs = minimum (map ((\ a -> abs (a - ix)) . snd) (filter (\ ys -> fst ys == x) (zip xs [0 .. ])))
 
 -- COMMANDS
 
@@ -43,16 +46,16 @@ valDecrement = do
 loopStart :: Monad m => StateT RaylangData m ()
 loopStart = do
     d <- get
-    let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getEndLoc else location (rayData d)
+    let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getEndLoc d else location (rayData d)
     put d {parseData = (parseData d){currentCommand = l}}
-    where getEndLoc = 5
+    where getEndLoc k = getClosestElemIndex (currentCommand (parseData k)) "liblib" (commandStrs (parseData k))
 
 loopEnd :: Monad m => StateT RaylangData m ()
 loopEnd = do
     d <- get
-    let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getBeginLoc else location (rayData d)
+    let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getBeginLoc d else location (rayData d)
     put d {parseData = (parseData d){currentCommand = l}}
-    where getBeginLoc = 5
+    where getBeginLoc k = getClosestElemIndex (currentCommand (parseData k)) "rayray" (commandStrs (parseData k))
 
 inputByte :: StateT RaylangData IO ()
 inputByte = do
@@ -66,6 +69,7 @@ outputByte = do
     d <- get
     liftIO $ putChar (vals (rayData d) !! location (rayData d))
 
+-- None command, for when an invalid input happens, does nothing
 none :: Monad m => StateT RaylangData m ()
 none = do
     s <- get
@@ -82,10 +86,13 @@ raylangFuncs = [ptrIncrement, ptrDecrement, valIncrement, valDecrement, loopStar
 parse :: String -> StateT RaylangData IO ()
 parse str = maybe none (raylangFuncs !!) (elemIndex str raylangCommands)
 
+getValid :: String -> [String]
+getValid str = filter (`elem` raylangCommands) (words str)
+
 -- toActions :: String -> [RayAction]
 
 initialRayData :: String -> RaylangData
-initialRayData str = RaylangData {rayData = RayData {vals=repeat (chr 97), location=0},parseData = ParseData {commands = map parse (words str), currentCommand = 0}}
+initialRayData src = RaylangData {rayData = RayData {vals=repeat (chr 97), location=0},parseData = ParseData {commands = map parse (words src), commandStrs = getValid src, currentCommand = 0}}
 
 execute :: StateT RaylangData IO ()
 execute = do
