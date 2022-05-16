@@ -17,7 +17,7 @@ data RayData = RayData {
 data RaylangData = RaylangData {rayData :: RayData, parseData :: ParseData}
 
 getClosestElemIndex :: Eq a => Int -> a -> [a] -> Int
-getClosestElemIndex ix x xs = minimum (map ((\ a -> abs (a - ix)) . snd) (filter (\ ys -> fst ys == x) (zip xs [0 .. ])))
+getClosestElemIndex ix x xs = (fromJust . elemIndex x) (drop ix xs)
 
 -- COMMANDS
 
@@ -43,19 +43,21 @@ valDecrement = do
     put d {rayData = (rayData d){vals = modifyVals (vals (rayData d)) (location (rayData d))}}
     where modifyVals c i = zipWith (\ a b -> if b == i then  chr (ord a - 1) else a) c [0..]
 
-loopStart :: Monad m => StateT RaylangData m ()
+loopStart :: StateT RaylangData IO ()
 loopStart = do
     d <- get
     let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getEndLoc d else currentCommand (parseData d)
+    -- liftIO $ print l
     put d {parseData = (parseData d){currentCommand = l}}
-    where getEndLoc k = fromJust (elemIndex "liblib" (commandStrs (parseData k)))
+    where getEndLoc k = currentCommand (parseData k) + getClosestElemIndex (currentCommand (parseData k)) "liblib" (commandStrs (parseData k))
 
-loopEnd :: Monad m => StateT RaylangData m ()
+loopEnd :: StateT RaylangData IO ()
 loopEnd = do
     d <- get
     let l = if (vals (rayData d) !! location (rayData d)) /= chr 0 then getBeginLoc d else currentCommand (parseData d)
+    --liftIO $ print l
     put d {parseData = (parseData d){currentCommand = l}}
-    where getBeginLoc k = fromJust (elemIndex "rayray" (commandStrs (parseData k)))
+    where getBeginLoc k = currentCommand (parseData k) - (fromJust . elemIndex "rayray") (reverse $ take (currentCommand (parseData k) + 1) (commandStrs (parseData k)))
 
 inputByte :: StateT RaylangData IO ()
 inputByte = do
@@ -67,7 +69,8 @@ inputByte = do
 outputByte :: StateT RaylangData IO ()
 outputByte = do
     d <- get
-    liftIO $ putChar (chr (ord (vals (rayData d) !! location (rayData d)) + 48))
+    --liftIO $ putChar (chr (ord (vals (rayData d) !! location (rayData d)) + 48))
+    liftIO $ putChar (vals (rayData d) !! location (rayData d))
 
 -- Parsing, commands , etc.
 
@@ -102,10 +105,32 @@ execute = do
 interpret :: String -> IO ()
 interpret str = evalStateT execute (initialRayData str)
 
--- main (with test program)
+-- main (with test program)getClosestElemIndex (10) "liblib" (test)
 
 test :: String
-test = "raylib raylib raylib raylibray ray raylib raylib raylib raylib raylibray rayray lib raylib ray libray liblib lib raylibray"
+test = "raylib raylib raylib raylib raylibray \
+\ ray raylib raylib raylib raylib raylibray \
+\ rayray lib raylib ray libray liblib \
+\ raylib raylib raylib raylib raylib raylib raylib raylib \
+\ rayray \
+\ lib raylib raylib raylib raylib raylib raylib \
+\ ray libray \
+\ liblib lib raylibray"
 
 main :: IO ()
 main = interpret test
+    -- print $ 34 - (fromJust . elemIndex "rayray") (reverse $ take (34 + 1) (getValid test))
+
+
+
+{-
+
+ "raylib raylib raylib raylibray                      sets first val to 3 \
+\ ray raylib raylib raylib raylib raylibray                 sets second val  to 4 \
+\ rayray lib raylib ray libray liblib                       adds the two, getting 7 \
+\ raylib raylib raylib raylib raylib raylib raylib raylib   makes second val 8 \
+\ rayray \
+\ lib raylib raylib raylib raylib raylib raylib             adds 6 to first val \
+\ ray libray                                                subtracts 1 from second val \
+\ liblib lib raylibray                                      end loop" -- Adds two numbers
+-}
