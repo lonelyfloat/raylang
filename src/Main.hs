@@ -127,6 +127,6 @@ test =  "raylib raylib raylib raylibray                     sets first val to 3 
 \ liblib lib raylibray                                      end loop" -- Adds two numbers
 
 
--- Main
+-- main (temporary)
 main :: IO ()
 main = interpret test
