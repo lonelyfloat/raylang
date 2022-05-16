@@ -115,7 +115,7 @@ execute = do
 interpret :: String -> IO ()
 interpret str = evalStateT execute (initialRayData str)
 
--- Test program
+-- Test program (temporary, will add file loading)
 test :: String
 test =  "raylib raylib raylib raylibray                     sets first val to 3 \
 \ ray raylib raylib raylib raylib raylibray                 sets second val  to 4 \
