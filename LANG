@@ -6,3 +6,5 @@ rayray -  looping start
 liblib - looping end
 libraylib - input byte at pointer
 raylibray - output byte at pointer
+
+All other text is comments.
