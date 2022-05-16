@@ -1,10 +1,12 @@
 module Main where
 
-import Data.List
+import System.Environment ( getArgs )
+import System.IO
+import Data.List ( elemIndex )
 import Data.Char ( ord, chr )
-import Control.Monad.Trans.State
-import Control.Monad.IO.Class
-import Data.Maybe
+import Data.Maybe ( fromJust )
+import Control.Monad.Trans.State ( evalStateT, put, get, StateT )
+import Control.Monad.IO.Class ( MonadIO(liftIO) )
 
 -- Datatypes
 
@@ -129,4 +131,9 @@ test =  "raylib raylib raylib raylibray                     sets first val to 3 
 
 -- main (temporary)
 main :: IO ()
-main = interpret test
+main = do
+    args <- getArgs
+    let filePath = head args
+    f <- openFile filePath ReadMode
+    src <- hGetContents f
+    interpret src
