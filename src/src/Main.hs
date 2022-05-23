@@ -21,6 +21,20 @@ data RayData = RayData {
 -- All the data used in the interpreter
 data RaylangData = RaylangData {rayData :: RayData, parseData :: ParseData}
 
+-- Utility functions
+
+countElem :: Eq a => a -> [a] -> Int
+countElem c str = length (filter (==c) str)
+
+getDepth :: Eq a => Int -> a -> a -> [a] -> Int
+getDepth i start end chars = countElem start currentStr - countElem end currentStr where currentStr = take (i+1) chars
+
+matchToStart :: Eq a => Int -> a -> a -> [a] -> Int
+matchToStart i start end chars = fromJust (elemIndex (getDepth i start end chars+1, start) (take i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars)))
+
+matchToEnd :: Eq a => Int -> a -> a -> [a] -> Int
+matchToEnd i start end chars = fromJust (elemIndex (getDepth i start end chars-1, end) (drop i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars))) + i
+
 -- COMMANDS
 
 -- Increments the index of the currently accesed cell in the list vals.
@@ -55,7 +69,7 @@ loopStart = do
     d <- get
     let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getEndLoc d else currentCommand (parseData d)
     put d {parseData = (parseData d){currentCommand = l}}
-    where getEndLoc k = currentCommand (parseData k) + (fromJust . elemIndex "liblib") (drop (currentCommand (parseData k)) (commandStrs (parseData k)))
+    where getEndLoc k = matchToEnd (currentCommand (parseData k)) "rayray" "liblib" (commandStrs (parseData k))
 
 -- Ends a loop that will terminate when the value at the currently accessed position in the vals list is 0.
 loopEnd :: Monad m => StateT RaylangData m ()
@@ -63,7 +77,7 @@ loopEnd = do
     d <- get
     let l = if (vals (rayData d) !! location (rayData d)) /= chr 0 then getBeginLoc d else currentCommand (parseData d)
     put d {parseData = (parseData d){currentCommand = l}}
-    where getBeginLoc k = currentCommand (parseData k) - (fromJust . elemIndex "rayray") (reverse $ take (currentCommand (parseData k) + 1) (commandStrs (parseData k)))
+    where getBeginLoc k = matchToStart (currentCommand (parseData k)) "rayray" "liblib" (commandStrs (parseData k))
 
 -- Gets an input char from the user and stores it at the currently accessed position in the vals list. 
 inputByte :: StateT RaylangData IO ()
@@ -117,19 +131,7 @@ execute = do
 interpret :: String -> IO ()
 interpret str = evalStateT execute (initialRayData str)
 
--- Test program (temporary, will add file loading)
-test :: String
-test =  "raylib raylib raylib raylibray                     sets first val to 3 \
-\ ray raylib raylib raylib raylib raylibray                 sets second val  to 4 \
-\ rayray lib raylib ray libray liblib                       adds the two values, getting 7 \
-\ raylib raylib raylib raylib raylib raylib raylib raylib   makes second val 8 \
-\ rayray \
-\ lib raylib raylib raylib raylib raylib raylib             adds 6 to first val \
-\ ray libray                                                subtracts 1 from second val until it is 0 \
-\ liblib lib raylibray                                      end loop" -- Adds two numbers
-
-
--- main (temporary)
+-- main
 main :: IO ()
 main = do
     args <- getArgs
