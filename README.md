@@ -6,6 +6,7 @@ The language is actually just a clone of Brainfuck, but all the commands are ray
 
 Here are all the commands - 
 
+```
 ray - data pointer increment
 lib - data pointer decrement
 raylib - increment value at pointer
@@ -14,6 +15,7 @@ rayray -  looping start
 liblib - looping end
 libraylib - input byte at pointer
 raylibray - output byte at pointer
+```
 
 All other text is comments.
 
