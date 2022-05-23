@@ -35,6 +35,9 @@ matchToStart i start end chars = i - (fromJust (elemIndex (getDepth i start end 
 matchToEnd :: Eq a => Int -> a -> a -> [a] -> Int
 matchToEnd i start end chars = fromJust (elemIndex (getDepth i start end chars-1, end) (drop i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars))) + i
 
+getValidValue :: RayData -> Char
+getValidValue d = if location d < 0 then chr 0 else vals d !! location d
+
 -- COMMANDS
 
 -- Increments the index of the currently accesed cell in the list vals.
@@ -67,15 +70,16 @@ valDecrement = do
 loopStart :: Monad m => StateT RaylangData m ()
 loopStart = do
     d <- get
-    let l = if (vals (rayData d) !! location (rayData d)) <= chr 0 then getEndLoc d else currentCommand (parseData d)
+    let l = if getValidValue (rayData d) == chr 0 then getEndLoc d else currentCommand (parseData d)
     put d {parseData = (parseData d){currentCommand = l}}
     where getEndLoc k = matchToEnd (currentCommand (parseData k)) "rayray" "liblib" (commandStrs (parseData k))
+
 
 -- Ends a loop that will terminate when the value at the currently accessed position in the vals list is 0.
 loopEnd :: Monad m => StateT RaylangData m ()
 loopEnd = do
     d <- get
-    let l = if (vals (rayData d) !! location (rayData d)) /= chr 0 then getBeginLoc d else currentCommand (parseData d)
+    let l = if getValidValue (rayData d) /= chr 0 then getBeginLoc d else currentCommand (parseData d)
     put d {parseData = (parseData d){currentCommand = l}}
     where getBeginLoc k = matchToStart (currentCommand (parseData k)) "rayray" "liblib" (commandStrs (parseData k))
 
