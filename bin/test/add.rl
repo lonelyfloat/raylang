@@ -1,5 +1,5 @@
-raylib raylib raylib raylibray                            sets first val to 3 
-ray raylib raylib raylib raylib raylibray                 sets second val  to 4
+raylib raylib raylib                                      sets first val to 3 
+ray raylib raylib raylib raylib                           sets second val  to 4
 rayray lib raylib ray libray liblib                       adds the two values, getting 7
 raylib raylib raylib raylib raylib raylib raylib raylib   makes second val 8
 rayray

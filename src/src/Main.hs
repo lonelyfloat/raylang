@@ -30,7 +30,7 @@ getDepth :: Eq a => Int -> a -> a -> [a] -> Int
 getDepth i start end chars = countElem start currentStr - countElem end currentStr where currentStr = take (i+1) chars
 
 matchToStart :: Eq a => Int -> a -> a -> [a] -> Int
-matchToStart i start end chars = fromJust (elemIndex (getDepth i start end chars+1, start) (take i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars)))
+matchToStart i start end chars = i - (fromJust (elemIndex (getDepth i start end chars+1, start) (reverse $ take i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars))) + 1)
 
 matchToEnd :: Eq a => Int -> a -> a -> [a] -> Int
 matchToEnd i start end chars = fromJust (elemIndex (getDepth i start end chars-1, end) (drop i (zip (map (\x -> getDepth x start end chars) [0..(length chars - 1)]) chars))) + i
@@ -67,7 +67,7 @@ valDecrement = do
 loopStart :: Monad m => StateT RaylangData m ()
 loopStart = do
     d <- get
-    let l = if (vals (rayData d) !! location (rayData d)) == chr 0 then getEndLoc d else currentCommand (parseData d)
+    let l = if (vals (rayData d) !! location (rayData d)) <= chr 0 then getEndLoc d else currentCommand (parseData d)
     put d {parseData = (parseData d){currentCommand = l}}
     where getEndLoc k = matchToEnd (currentCommand (parseData k)) "rayray" "liblib" (commandStrs (parseData k))
 
@@ -121,7 +121,9 @@ execute = do
     d <- get   
     commands (parseData d) !! currentCommand (parseData d)
     dm <- get
-    -- liftIO $ print (vals (rayData d) !! location (rayData d))
+    --liftIO $ print ((commandStrs (parseData dm)) !! (currentCommand (parseData dm)))
+    --liftIO $ print $ ord ((vals (rayData dm)) !! (location (rayData dm)))
+    --liftIO $ print $ location (rayData dm)
     let l = currentCommand (parseData dm) + 1
     if l >= totalCommands (parseData dm) then put dm {parseData = (parseData dm){currentCommand = l}} else do
         put dm {parseData = (parseData dm){currentCommand = l}} 
@@ -138,4 +140,5 @@ main = do
     let filePath = head args
     f <- openFile filePath ReadMode
     src <- hGetContents f
+    -- print $ matchToStart 34 "rayray" "liblib" (getValid src)
     interpret src
