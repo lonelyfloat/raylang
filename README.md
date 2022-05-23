@@ -21,4 +21,6 @@ All other text is comments.
 
 This language is really more of a test to see if I could write an interpreter in Haskell.
 To use the language, run the executable at `bin/raylang` from the terminal, and pass in the relative directory of a source file.
-An adding program is also in the `bin/` directory, so to run that program all you need to do is run the command `raylang test/add.rl`.
+An adding program is also in the `bin/` directory, so to run that program all you need to do is run the command `./raylang test/add.rl`.
+
+To run this on Windows (or any other platforms), you need to have GHCup installed. From there, you can install the dependences listed in the `src/raylang.cabal`. Finally, you can run `cabal build` to get your raylang executable.
